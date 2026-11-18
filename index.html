@@ -20,6 +20,7 @@
     // styr den med postMessage. YouTube kräver att spelaren bäddas in från en
     // riktig webbadress, därför ligger sidan här och inte i appen.
     //
+    // Kommandon från appen: unmute, mute, fade (volym, ms), pause, play, next.
     // Parametrar: ?v=id1,id2 egna videor, ?list=PL… en YouTube-spellista,
     // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
     (function () {
@@ -75,10 +76,23 @@
         });
       };
 
+      // Fade the volume to `to` (0–100) over `ms` milliseconds.
+      var fadeTimer = null;
+      function fade(to, ms) {
+        clearInterval(fadeTimer);
+        var from = player.getVolume ? player.getVolume() : 100, steps = Math.max(1, Math.round((ms || 2000) / 100)), step = 0;
+        fadeTimer = setInterval(function () {
+          step++;
+          player.setVolume(Math.round(from + (to - from) * step / steps));
+          if (step >= steps) { clearInterval(fadeTimer); if (to === 0) player.pauseVideo(); }
+        }, 100);
+      }
+
       window.addEventListener('message', function (event) {
         var data = event.data;
         if (!data || data.to !== 'musikpaus' || !player) return;
-        if (data.cmd === 'unmute') { player.unMute(); player.setVolume(data.volume || 100); }
+        if (data.cmd === 'fade') fade(data.volume || 0, data.ms);
+        else if (data.cmd === 'unmute') { player.unMute(); player.setVolume(data.volume || 100); }
         else if (data.cmd === 'mute') player.mute();
         else if (data.cmd === 'pause') player.pauseVideo();
         else if (data.cmd === 'play') player.playVideo();
