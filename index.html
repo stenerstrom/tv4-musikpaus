@@ -7,7 +7,9 @@
   <title>Musikpaus</title>
   <style>
     html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
-    #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+    /* The player is 1280x720 and scaled to the screen: YouTube picks quality
+       from the player's size, and 1080p/4K used too much memory on the TV. */
+    #player { position: absolute; top: 0; left: 0; width: 1280px; height: 720px; transform-origin: 0 0; }
   </style>
 </head>
 <body>
@@ -59,7 +61,7 @@
         if (list) { vars.listType = 'playlist'; vars.list = list; }
         else { vars.playlist = order.slice(1).join(','); vars.loop = 1; }
         player = new YT.Player('player', {
-          width: '100%', height: '100%', videoId: list ? undefined : order[0], playerVars: vars,
+          width: 1280, height: 720, videoId: list ? undefined : order[0], playerVars: vars,
           events: {
             onReady: function (event) { event.target.playVideo(); send({ type: 'ready' }); },
             onStateChange: function (event) {
@@ -82,6 +84,13 @@
         else if (data.cmd === 'play') player.playVideo();
         else if (data.cmd === 'next') player.nextVideo();
       });
+
+      function fit() {
+        var element = document.getElementById('player');
+        if (element) element.style.transform = 'scale(' + Math.min(window.innerWidth / 1280, window.innerHeight / 720) + ')';
+      }
+      window.addEventListener('resize', fit);
+      setInterval(fit, 1000); // the API replaces #player with an iframe
 
       var api = document.createElement('script');
       api.src = 'https://www.youtube.com/iframe_api';
