@@ -25,16 +25,19 @@
     // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
     (function () {
       var params = new URLSearchParams(location.search);
+      // Tessans och Stefans lista (2026-11-18), varvad mellan artisterna.
+      // Alla spelade inbäddat på TV:n via den här sidan.
       var DEFAULT = [
-        'xFrGuyw1V8s', // ABBA – Dancing Queen
-        'IcrbM1l_BoI', // Avicii – Wake Me Up
-        'djV11Xbc914', // a-ha – Take On Me
-        'FTQbiNvZqaY', // Toto – Africa
-        '9jK-NcRmVcw', // Europe – The Final Countdown
-        'ZJL4UGSbeFg', // Shania Twain – Man! I Feel Like A Woman!
-        'fJ9rUzIMcZQ', // Queen – Bohemian Rhapsody
-        'y6120QOlsfU', // Darude – Sandstorm
-        'dQw4w9WgXcQ'  // Rick Astley – Never Gonna Give You Up
+        'gG_dA32oH44', // Jay-Z & Kanye West – Ni**as In Paris
+        '9bZkp7q19f0', // PSY – Gangnam Style
+        'K6BRna4_bmg', // bbno$ & Rich Brian – edamame
+        'PsO6ZnUZI0g', // Kanye West – Stronger
+        'ASO_zypdnsQ', // PSY – Gentleman
+        'N2Y2vQ-1m7M', // Y2K, bbno$ – Lalala
+        '6vwNcNOTVzY', // Kanye West – Gold Digger ft. Jamie Foxx
+        'FrG4TEcSuRg', // PSY – DADDY ft. CL
+        'QuvqzlxEO6g', // bbno$ – it boy
+        'Co0tTeuUVhU'  // Kanye West – Heartless
       ];
       var ids = (params.get('v') || '').split(',').filter(function (id) { return /^[\w-]{11}$/.test(id); });
       if (!ids.length) ids = DEFAULT;
@@ -72,7 +75,6 @@
               send({ type: 'state', state: event.data, id: video.id, title: video.title });
             },
             // 101/150: ägaren tillåter inte inbäddning. Hoppa till nästa.
-            // (Lil Nas X – Old Town Road gav 150 på TV:n och togs bort ur listan.)
             onError: function (event) { send({ type: 'error', code: event.data, id: current().id }); player.nextVideo(); }
           }
         });
