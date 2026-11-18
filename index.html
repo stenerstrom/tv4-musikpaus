@@ -70,13 +70,19 @@
         message.from = 'musikpaus';
         if (parent !== window) parent.postMessage(message, '*');
       }
+      // No subtitles: YouTube turns captions on by itself for some videos
+      // (for example Korean ones), so unload the caption module on every start.
+      function noCaptions() {
+        try { player.unloadModule('captions'); } catch (e) {}
+        try { player.unloadModule('cc'); } catch (e) {}
+      }
       function current() {
         var data = player && player.getVideoData ? player.getVideoData() : {};
         return { id: data.video_id || '', title: data.title || '' };
       }
 
       window.onYouTubeIframeAPIReady = function () {
-        var vars = { autoplay: wait ? 0 : 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, mute: muted ? 1 : 0, origin: location.origin };
+        var vars = { autoplay: wait ? 0 : 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, cc_load_policy: 0, mute: muted ? 1 : 0, origin: location.origin };
         if (list) { vars.listType = 'playlist'; vars.list = list; }
         // `playlist` must not be empty: a single video loops by listing itself
         // (an empty value gave error 150 for every video on the TV).
@@ -84,9 +90,10 @@
         player = new YT.Player('player', {
           width: 1280, height: 720, videoId: list ? undefined : order[0], playerVars: vars,
           events: {
-            onReady: function (event) { if (!wait) event.target.playVideo(); send({ type: 'ready', waiting: wait }); },
+            onReady: function (event) { noCaptions(); if (!wait) event.target.playVideo(); send({ type: 'ready', waiting: wait }); },
             onStateChange: function (event) {
               var video = current();
+              if (event.data === 1 || event.data === 3) noCaptions();
               if (event.data === 1 && video.id) { try { localStorage.setItem(KEY, video.id); } catch (e) {} }
               send({ type: 'state', state: event.data, id: video.id, title: video.title });
             },
