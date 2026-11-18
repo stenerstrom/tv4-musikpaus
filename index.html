@@ -25,7 +25,6 @@
     (function () {
       var params = new URLSearchParams(location.search);
       var DEFAULT = [
-        'w2Ov5jzm3j8', // Lil Nas X – Old Town Road ft. Billy Ray Cyrus
         'xFrGuyw1V8s', // ABBA – Dancing Queen
         'IcrbM1l_BoI', // Avicii – Wake Me Up
         'djV11Xbc914', // a-ha – Take On Me
@@ -70,6 +69,7 @@
               send({ type: 'state', state: event.data, id: video.id, title: video.title });
             },
             // 101/150: ägaren tillåter inte inbäddning. Hoppa till nästa.
+            // (Lil Nas X – Old Town Road gav 150 på TV:n och togs bort ur listan.)
             onError: function (event) { send({ type: 'error', code: event.data, id: current().id }); player.nextVideo(); }
           }
         });
