@@ -21,7 +21,7 @@
     // riktig webbadress, därför ligger sidan här och inte i appen.
     //
     // Kommandon från appen: unmute, mute, fade (volym, ms), pause, play, next.
-    // Parametrar: ?v=id1,id2 egna videor, ?list=PL… en YouTube-spellista,
+    // Parametrar: ?v=id1,id2 egna videor, ?list=PL… en YouTube-spellista, ?wait=1 vänta på play,
     // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
     (function () {
       var params = new URLSearchParams(location.search);
@@ -56,6 +56,9 @@
       if (!ids.length) ids = DEFAULT;
       var list = params.get('list');
       var muted = params.get('mute') === '1';
+      // ?wait=1: load and cue the video without playing; the app sends 'play'
+      // when the ad break starts, so the music starts at once.
+      var wait = params.get('wait') === '1';
       var KEY = 'musikpaus-senaste';
       // Fortsätt med nästa video i nästa reklampaus.
       var start = 0;
@@ -73,7 +76,7 @@
       }
 
       window.onYouTubeIframeAPIReady = function () {
-        var vars = { autoplay: 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, mute: muted ? 1 : 0, origin: location.origin };
+        var vars = { autoplay: wait ? 0 : 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, mute: muted ? 1 : 0, origin: location.origin };
         if (list) { vars.listType = 'playlist'; vars.list = list; }
         // `playlist` must not be empty: a single video loops by listing itself
         // (an empty value gave error 150 for every video on the TV).
@@ -81,7 +84,7 @@
         player = new YT.Player('player', {
           width: 1280, height: 720, videoId: list ? undefined : order[0], playerVars: vars,
           events: {
-            onReady: function (event) { event.target.playVideo(); send({ type: 'ready' }); },
+            onReady: function (event) { if (!wait) event.target.playVideo(); send({ type: 'ready', waiting: wait }); },
             onStateChange: function (event) {
               var video = current();
               if (event.data === 1 && video.id) { try { localStorage.setItem(KEY, video.id); } catch (e) {} }
@@ -112,7 +115,7 @@
         else if (data.cmd === 'unmute') { player.unMute(); player.setVolume(data.volume || 100); }
         else if (data.cmd === 'mute') player.mute();
         else if (data.cmd === 'pause') player.pauseVideo();
-        else if (data.cmd === 'play') player.playVideo();
+        else if (data.cmd === 'play') { if (!muted) { player.unMute(); player.setVolume(data.volume || 100); } player.playVideo(); }
         else if (data.cmd === 'next') player.nextVideo();
       });
 
