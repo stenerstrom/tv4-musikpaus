@@ -26,30 +26,31 @@
     (function () {
       var params = new URLSearchParams(location.search);
       // Tessans och Stefans lista (2026-11-18), varvad mellan artisterna.
-      // Alla 23 spelade inbäddat på TV:n via den här sidan.
+      // Alla 24 spelade inbäddat på TV:n via den här sidan.
       var DEFAULT = [
         'gG_dA32oH44', // Jay-Z & Kanye West – Ni**as In Paris
         'gT2wY0DjYGo', // Joost Klein – Europapa
         'K6BRna4_bmg', // bbno$ & Rich Brian – edamame
         '9bZkp7q19f0', // PSY – Gangnam Style
         'PDplREoE5n4', // ceo@business.net – cry about it
-        'pMTPVas3Bc0', // jungle bobby – for real
+        'ViwtNLUqkMY', // Beyoncé – Crazy In Love ft. JAY Z
         'PsO6ZnUZI0g', // Kanye West – Stronger
         'jDVng1l01JU', // lentra – i could die
         'MWXdpxgbndw', // bbno$, ceo@business.net & jungle bobby – take a trip (prod. lentra)
         'LMzAssOr2zE', // Joost, Ski Aggu & Otto Waalkes – Friesenjung
         'ASO_zypdnsQ', // PSY – Gentleman
         'N2Y2vQ-1m7M', // Y2K, bbno$ – Lalala
+        'WDZJPJV__bQ', // Beyoncé – Formation
         'w-LSnjawbGI', // ceo@business.net – bad
         '6vwNcNOTVzY', // Kanye West – Gold Digger ft. Jamie Foxx
         'NcQRJflRstw', // bbno$ – nursery (prod. lentra)
-        'bn6r9ez5Iuo', // jungle bobby – the moves
+        '4m1EFMoRFvY', // Beyoncé – Single Ladies (Put a Ring on It)
         'FrG4TEcSuRg', // PSY – DADDY ft. CL
         'HAjWFhRW5Ic', // Joost – Hate Music
         'z2mNX-CpQe8', // ceo@business.net – wanna be ft. hyphen
         'QuvqzlxEO6g', // bbno$ – it boy
         'Osxpc6ZH0FA', // bbno$ – imma (prod. lentra)
-        'WEgbixY2W_4', // jungle bobby – Regalia
+        'VBmMU_iwe6U', // Beyoncé – Run the World (Girls)
         'Co0tTeuUVhU'  // Kanye West – Heartless
       ];
       var ids = (params.get('v') || '').split(',').filter(function (id) { return /^[\w-]{11}$/.test(id); });
