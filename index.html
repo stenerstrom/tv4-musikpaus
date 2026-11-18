@@ -59,6 +59,11 @@
       // ?wait=1: load and cue the video without playing; the app sends 'play'
       // when the ad break starts, so the music starts at once.
       var wait = params.get('wait') === '1';
+      // ?prime=1 (with wait): play a moment without sound and pause at the
+      // start, so YouTube has already fetched and buffered the video when the
+      // app sends 'play'.
+      var prime = wait && params.get('prime') === '1';
+      var priming = false;
       var KEY = 'musikpaus-senaste';
       // Fortsätt med nästa video i nästa reklampaus.
       var start = 0;
@@ -90,9 +95,23 @@
         player = new YT.Player('player', {
           width: 1280, height: 720, videoId: list ? undefined : order[0], playerVars: vars,
           events: {
-            onReady: function (event) { noCaptions(); if (!wait) event.target.playVideo(); send({ type: 'ready', waiting: wait }); },
+            onReady: function (event) {
+              noCaptions();
+              if (!wait) event.target.playVideo();
+              else if (prime) { priming = true; event.target.mute(); event.target.playVideo(); }
+              send({ type: 'ready', waiting: wait, priming: priming });
+            },
             onStateChange: function (event) {
               var video = current();
+              if (priming) {
+                // Not the real start: stop at the beginning and keep buffering.
+                if (event.data === 1) {
+                  priming = false;
+                  player.pauseVideo(); player.seekTo(0, true);
+                  send({ type: 'primed', id: video.id, title: video.title });
+                }
+                return;
+              }
               if (event.data === 1 || event.data === 3) noCaptions();
               if (event.data === 1 && video.id) { try { localStorage.setItem(KEY, video.id); } catch (e) {} }
               send({ type: 'state', state: event.data, id: video.id, title: video.title });
