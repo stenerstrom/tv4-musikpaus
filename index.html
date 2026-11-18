@@ -59,7 +59,9 @@
       window.onYouTubeIframeAPIReady = function () {
         var vars = { autoplay: 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, mute: muted ? 1 : 0, origin: location.origin };
         if (list) { vars.listType = 'playlist'; vars.list = list; }
-        else { vars.playlist = order.slice(1).join(','); vars.loop = 1; }
+        // `playlist` must not be empty: a single video loops by listing itself
+        // (an empty value gave error 150 for every video on the TV).
+        else { vars.playlist = order.length > 1 ? order.slice(1).join(',') : order[0]; vars.loop = 1; }
         player = new YT.Player('player', {
           width: 1280, height: 720, videoId: list ? undefined : order[0], playerVars: vars,
           events: {
