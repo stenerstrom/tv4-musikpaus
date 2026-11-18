@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Musikpaus</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+    #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+  <script>
+    // Musikpaus för TV4 Play Community (LG webOS): spelar musikvideor medan en
+    // reklampaus pågår i en direktsändning. Appen visar sidan i en iframe och
+    // styr den med postMessage. YouTube kräver att spelaren bäddas in från en
+    // riktig webbadress, därför ligger sidan här och inte i appen.
+    //
+    // Parametrar: ?v=id1,id2 egna videor, ?list=PL… en YouTube-spellista,
+    // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var DEFAULT = [
+        'w2Ov5jzm3j8', // Lil Nas X – Old Town Road ft. Billy Ray Cyrus
+        'xFrGuyw1V8s', // ABBA – Dancing Queen
+        'IcrbM1l_BoI', // Avicii – Wake Me Up
+        'djV11Xbc914', // a-ha – Take On Me
+        'FTQbiNvZqaY', // Toto – Africa
+        '9jK-NcRmVcw', // Europe – The Final Countdown
+        'ZJL4UGSbeFg', // Shania Twain – Man! I Feel Like A Woman!
+        'fJ9rUzIMcZQ', // Queen – Bohemian Rhapsody
+        'y6120QOlsfU', // Darude – Sandstorm
+        'dQw4w9WgXcQ'  // Rick Astley – Never Gonna Give You Up
+      ];
+      var ids = (params.get('v') || '').split(',').filter(function (id) { return /^[\w-]{11}$/.test(id); });
+      if (!ids.length) ids = DEFAULT;
+      var list = params.get('list');
+      var muted = params.get('mute') === '1';
+      var KEY = 'musikpaus-senaste';
+      // Fortsätt med nästa video i nästa reklampaus.
+      var start = 0;
+      try { var last = ids.indexOf(localStorage.getItem(KEY)); if (last >= 0) start = (last + 1) % ids.length; } catch (e) {}
+      var order = ids.slice(start).concat(ids.slice(0, start));
+      var player = null;
+
+      function send(message) {
+        message.from = 'musikpaus';
+        if (parent !== window) parent.postMessage(message, '*');
+      }
+      function current() {
+        var data = player && player.getVideoData ? player.getVideoData() : {};
+        return { id: data.video_id || '', title: data.title || '' };
+      }
+
+      window.onYouTubeIframeAPIReady = function () {
+        var vars = { autoplay: 1, controls: 0, rel: 0, playsinline: 1, iv_load_policy: 3, mute: muted ? 1 : 0, origin: location.origin };
+        if (list) { vars.listType = 'playlist'; vars.list = list; }
+        else { vars.playlist = order.slice(1).join(','); vars.loop = 1; }
+        player = new YT.Player('player', {
+          width: '100%', height: '100%', videoId: list ? undefined : order[0], playerVars: vars,
+          events: {
+            onReady: function (event) { event.target.playVideo(); send({ type: 'ready' }); },
+            onStateChange: function (event) {
+              var video = current();
+              if (event.data === 1 && video.id) { try { localStorage.setItem(KEY, video.id); } catch (e) {} }
+              send({ type: 'state', state: event.data, id: video.id, title: video.title });
+            },
+            // 101/150: ägaren tillåter inte inbäddning. Hoppa till nästa.
+            onError: function (event) { send({ type: 'error', code: event.data, id: current().id }); player.nextVideo(); }
+          }
+        });
+      };
+
+      window.addEventListener('message', function (event) {
+        var data = event.data;
+        if (!data || data.to !== 'musikpaus' || !player) return;
+        if (data.cmd === 'unmute') { player.unMute(); player.setVolume(data.volume || 100); }
+        else if (data.cmd === 'mute') player.mute();
+        else if (data.cmd === 'pause') player.pauseVideo();
+        else if (data.cmd === 'play') player.playVideo();
+        else if (data.cmd === 'next') player.nextVideo();
+      });
+
+      var api = document.createElement('script');
+      api.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(api);
+    })();
+  </script>
+</body>
+</html>
