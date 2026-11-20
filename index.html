@@ -25,8 +25,8 @@
     // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
     (function () {
       var params = new URLSearchParams(location.search);
-      // Tessans och Stefans lista (2026-11-18), varvad mellan artisterna.
-      // Alla 24 spelade inbäddat på TV:n via den här sidan.
+      // Tessans och Stefans lista (2026-11-18, ändrad 2026-11-20). Spelas i
+      // blandad ordning, se nextOrder nedan.
       var DEFAULT = [
         'gG_dA32oH44', // Jay-Z & Kanye West – Ni**as In Paris
         'gT2wY0DjYGo', // Joost Klein – Europapa
@@ -47,7 +47,7 @@
         '4m1EFMoRFvY', // Beyoncé – Single Ladies (Put a Ring on It)
         'FrG4TEcSuRg', // PSY – DADDY ft. CL
         'HAjWFhRW5Ic', // Joost – Hate Music
-        'z2mNX-CpQe8', // ceo@business.net – wanna be ft. hyphen
+        'iPtcDNypsw0', // ceo@business.net – psycho drama
         'QuvqzlxEO6g', // bbno$ – it boy
         'Osxpc6ZH0FA', // bbno$ – imma (prod. lentra)
         'VBmMU_iwe6U', // Beyoncé – Run the World (Girls)
@@ -65,11 +65,44 @@
       // app sends 'play'.
       var prime = wait && params.get('prime') === '1';
       var priming = false;
-      var KEY = 'musikpaus-senaste';
-      // Fortsätt med nästa video i nästa reklampaus.
-      var start = 0;
-      try { var last = ids.indexOf(localStorage.getItem(KEY)); if (last >= 0) start = (last + 1) % ids.length; } catch (e) {}
-      var order = ids.slice(start).concat(ids.slice(0, start));
+      // Blandad ordning som en kortlek: varje låt spelas en gång innan någon
+      // kommer igen, sedan blandas listan om. Spelade låtar sparas i webbläsaren,
+      // så nästa reklampaus fortsätter med de som är kvar. De senast spelade
+      // läggs sist när ett nytt varv börjar, så en låt inte kommer tillbaka direkt.
+      var KEY = 'musikpaus-spelade';
+      var RECENT = 6;
+      function shuffle(list, random) {
+        var copy = list.slice();
+        for (var i = copy.length - 1; i > 0; i--) {
+          var j = Math.floor(random() * (i + 1));
+          var swap = copy[i]; copy[i] = copy[j]; copy[j] = swap;
+        }
+        return copy;
+      }
+      function nextOrder(ids, saved, random) {
+        var known = function (id) { return ids.indexOf(id) >= 0; };
+        var played = (saved && saved.played || []).filter(known);
+        var recent = (saved && saved.recent || []).filter(known);
+        var left = ids.filter(function (id) { return played.indexOf(id) < 0; });
+        if (!left.length) left = ids.slice();
+        var rest = ids.filter(function (id) { return left.indexOf(id) < 0; });
+        var fresh = function (id) { return recent.indexOf(id) < 0; };
+        var stale = function (list) { return recent.filter(function (id) { return list.indexOf(id) >= 0; }); };
+        // Oldest of the recent first, the very last song at the end.
+        return shuffle(left.filter(fresh), random).concat(stale(left), shuffle(rest.filter(fresh), random), stale(rest));
+      }
+      function readSaved() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } }
+      function markPlayed(id) {
+        var saved = readSaved() || {};
+        var others = function (x) { return ids.indexOf(x) >= 0 && x !== id; };
+        var played = (saved.played || []).filter(others);
+        played.push(id);
+        if (played.length >= ids.length) played = [id];
+        var recent = (saved.recent || []).filter(others);
+        recent.push(id);
+        try { localStorage.setItem(KEY, JSON.stringify({ played: played, recent: recent.slice(-RECENT) })); } catch (e) {}
+      }
+      var order = nextOrder(ids, readSaved(), Math.random);
       var player = null;
 
       function send(message) {
@@ -114,7 +147,7 @@
                 return;
               }
               if (event.data === 1 || event.data === 3) noCaptions();
-              if (event.data === 1 && video.id) { try { localStorage.setItem(KEY, video.id); } catch (e) {} }
+              if (event.data === 1 && video.id) markPlayed(video.id);
               send({ type: 'state', state: event.data, id: video.id, title: video.title });
             },
             // 101/150: ägaren tillåter inte inbäddning. Hoppa till nästa.
