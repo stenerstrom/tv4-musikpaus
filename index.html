@@ -25,16 +25,22 @@
     // ?mute=1 starta utan ljud. Skriven för TV:ns Chromium 79 (ES5).
     (function () {
       var params = new URLSearchParams(location.search);
-      // Tessans och Stefans lista (2026-11-18, ändrad 2026-11-20). Spelas i
+      // Tessans och Stefans lista (2026-11-18, ändrad 2026-11-21). Spelas i
       // blandad ordning, se nextOrder nedan.
+      //
+      // Bara ocensurerade versioner. Många officiella musikvideor är radioversioner
+      // med bortklippta svordomar, så en låt med svordomar läggs in med en video
+      // märkt Explicit, Dirty eller Uncensored. Finns ingen sådan musikvideo används
+      // skivversionen från artistens officiella kanal (bara omslagsbild). Uppladdningar
+      // från andra kanaler kan försvinna; sidan hoppar då över dem (onError).
       var DEFAULT = [
-        'gG_dA32oH44', // Jay-Z & Kanye West – Ni**as In Paris
+        'gG_dA32oH44', // Jay-Z & Kanye West – Ni**as In Paris (Explicit)
         'gT2wY0DjYGo', // Joost Klein – Europapa
         'K6BRna4_bmg', // bbno$ & Rich Brian – edamame
         '9bZkp7q19f0', // PSY – Gangnam Style
         'PDplREoE5n4', // ceo@business.net – cry about it
         'ViwtNLUqkMY', // Beyoncé – Crazy In Love ft. JAY Z
-        'PsO6ZnUZI0g', // Kanye West – Stronger
+        'gIrx-Es9Ocg', // Kanye West – Stronger (Explicit, inte från Kanyes kanal)
         'jDVng1l01JU', // lentra – i could die
         'MWXdpxgbndw', // bbno$, ceo@business.net & jungle bobby – take a trip (prod. lentra)
         'LMzAssOr2zE', // Joost, Ski Aggu & Otto Waalkes – Friesenjung
@@ -42,7 +48,7 @@
         'N2Y2vQ-1m7M', // Y2K, bbno$ – Lalala
         'WDZJPJV__bQ', // Beyoncé – Formation
         'w-LSnjawbGI', // ceo@business.net – bad
-        '6vwNcNOTVzY', // Kanye West – Gold Digger ft. Jamie Foxx
+        'uVL4d8P44eM', // Kanye West – Gold Digger ft. Jamie Foxx (skivversion, musikvideon är censurerad)
         'NcQRJflRstw', // bbno$ – nursery (prod. lentra)
         '4m1EFMoRFvY', // Beyoncé – Single Ladies (Put a Ring on It)
         'FrG4TEcSuRg', // PSY – DADDY ft. CL
@@ -50,7 +56,23 @@
         'QuvqzlxEO6g', // bbno$ – it boy
         'Osxpc6ZH0FA', // bbno$ – imma (prod. lentra)
         'VBmMU_iwe6U', // Beyoncé – Run the World (Girls)
-        'Co0tTeuUVhU'  // Kanye West – Heartless
+        'Co0tTeuUVhU', // Kanye West – Heartless
+        'LDj8kkVwisY', // Eminem – My Name Is (Dirty Version)
+        'FA2j9qlFyDU', // Eminem – The Real Slim Shady (Dirty Version, inte från Eminems kanal)
+        'c9uUFU7KeRc', // Eminem – Without Me (Explicit, inte från Eminems kanal)
+        '7YuAzR2XVAM', // Eminem – Lose Yourself (Explicit, inte från Eminems kanal)
+        'QFcv5Ma8u8k', // Dr. Dre & Eminem – Forgot About Dre (Explicit)
+        'QOi9vlQ_HrY', // Dr. Dre & Snoop Dogg – Still D.R.E. (Explicit, inte från Dres kanal)
+        'AXDBLeiolPE', // Dr. Dre & Snoop Dogg – The Next Episode (Uncensored, inte från Dres kanal)
+        'Ne_hVxwEGCg', // Dr. Dre & Snoop Dogg – Nuthin' But a "G" Thang (Dirty)
+        'y1MQ95FhgUE', // Snoop Dogg – Drop It Like It's Hot ft. Pharrell (Uncensored, inte från Snoops kanal)
+        'SNGmspjsQko', // Snoop Doggy Dogg – Gin & Juice (Explicit, inte från Snoops kanal)
+        'Ci40ae8BlcE', // Dizzee Rascal & Armand Van Helden – Bonkers
+        'GibLntdLiJA', // Dizzee Rascal – Dance Wiv Me
+        'D1gl46hh3sQ', // Dizzee Rascal – Bassline Junkie (Explicit)
+        'tvTRZJ-4EyI', // Kendrick Lamar – HUMBLE.
+        'B5YNiCfWC3A', // Kendrick Lamar – Swimming Pools (Drank) (kanalen har en separat Clean)
+        'GF8aaTu2kg0'  // Kendrick Lamar – Bitch, Don't Kill My Vibe (Explicit)
       ];
       var ids = (params.get('v') || '').split(',').filter(function (id) { return /^[\w-]{11}$/.test(id); });
       if (!ids.length) ids = DEFAULT;
